@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "forceConsistentCasingInFileNames": true,
+    "preserveConstEnums": true,
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "removeComments": true,
+    "module": "CommonJS",
+    "declaration": true,
+    "sourceMap": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "strict": true
+  },
+  "exclude": ["node_modules", "build"],
+  "include": ["./src/**/*"],
+  "parserOptions": {
+    "ecmaVersion": "2020",
+    "sourceType": "module"
+  }
+}
