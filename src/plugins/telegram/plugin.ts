@@ -5,12 +5,12 @@ import { FastifyPluginAsync } from 'fastify'
 import { Client } from '@telegraf/client'
 import { Type } from '@sinclair/typebox'
 
-import { PipelineContext, PipelineOutput } from '../pipeline/pipeline'
+import { PipelineContext, InterfaceContext } from '../../lib/context'
 
 export interface TelegramPluginOptions {
   botToken: string
   routePath: string
-  pipelineHandler: (input: PipelineContext) => Promise<PipelineOutput>
+  pipelineHandler: (input: InterfaceContext) => Promise<PipelineContext>
 }
 
 const telegramPlugin: FastifyPluginAsync<TelegramPluginOptions> = async (fastify, options) => {
@@ -31,21 +31,23 @@ const telegramPlugin: FastifyPluginAsync<TelegramPluginOptions> = async (fastify
       },
     },
     async (request, reply) => {
-      const ctx = {
+      const requestCtx: InterfaceContext = {
         interface: 'telegram',
         from: request.body.message.from.id,
-        message: request.body.message.text,
+        incomingUserResponse: request.body.message.text,
       }
 
-      const pipelineOutput = await options.pipelineHandler(ctx)
+      try {
+        const pipelineOutput = await options.pipelineHandler(requestCtx)
+        await tgClient.call('sendMessage', {
+          chat_id: requestCtx.from,
+          text: pipelineOutput.outgoingUserReply,
+        })
 
-      // TODO: extract out to adapter implmenting abstract class
-      await tgClient.call('sendMessage', {
-        chat_id: request.body.message.from.id,
-        text: pipelineOutput.message,
-      })
-
-      reply.status(200).send()
+        reply.status(200).send()
+      } catch (error) {
+        reply.status(500).send()
+      }
     },
   )
 }

@@ -1,11 +1,13 @@
 import { resolve } from 'path'
 
 import { ajvTypeBoxPlugin, TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
+import formBody from '@fastify/formbody'
 import { Config } from 'confini'
 import Fastify from 'fastify'
 
 import echoPipelineHandler from './pipeline/echo-pipeline'
-import telegramPlugin from './plugins/telegram'
+import telegramPlugin from './plugins/telegram/plugin'
+import atPlugin from './plugins/africas-talking/plugin'
 
 const app = Fastify({
   ajv: {
@@ -20,11 +22,17 @@ async function startServer() {
   const c = new Config(resolve(__dirname, '..') + '/config')
   c.process()
 
-  app.register(telegramPlugin, {
-    botToken: c.get('TELEGRAM_BOT_TOKEN'),
-    routePath: c.get('TELEGRAM_ROUTE_PATH'),
-    pipelineHandler: echoPipelineHandler,
-  })
+  app
+    .register(formBody)
+    .register(telegramPlugin, {
+      botToken: c.get('TELEGRAM_BOT_TOKEN'),
+      routePath: c.get('TELEGRAM_ROUTE_PATH'),
+      pipelineHandler: echoPipelineHandler,
+    })
+    .register(atPlugin, {
+      routePath: '/',
+      pipelineHandler: echoPipelineHandler,
+    })
 
   await app.ready()
   await app.listen({ port: c.get('SERVER_PORT') })
